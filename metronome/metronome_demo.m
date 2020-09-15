@@ -10,8 +10,8 @@ function [p]=metronome_demo()
     p.dt=.005; %time increment
     p.numtasks=round(p.stoptime/p.dt);
     
-    p.scale=20
-    p.scale2=2
+    p.scale=1
+    p.scale2=1
     p.g=9.8; %m/s^2
     p.m=2; %mass 
     p.k=5; %stiffness
@@ -115,10 +115,19 @@ function [p]=metronome_demo()
         th=timer;
         % prepare the plot
 %         axis equal
-        axes('xlim',[-5,5],'ylim',[-1,1]);
-        set(gca,'DataAspectRatio',[1 1 1])
+        ax1 = axes('Parent',f,'Units','normalized','Position',[.2 .6 .6 .3]);
+        grid(ax1,'on')
+        set(ax1,'XLim',[0,10],'YLim',[0,2])
+
+        ax2 = axes('Parent',f,'Units','normalized','Position',[.1 .2 .6 .3]);
+        set(ax2,'XLim',[-1,1],'YLim',[-1,1],'DataAspectRatio',[1 1 1])
+        grid(ax2,'on')
+
+%         axes('xlim',[-5,5],'ylim',[-1,1]);
+%         set(gca,'DataAspectRatio',[1 1 1])
         
-        grid on
+%         grid on
+        axes(ax1)
         l=line(p.t,p.th0,...
             'userdata',0,...
             'marker','.',...
@@ -126,6 +135,7 @@ function [p]=metronome_demo()
             'markersize',2,...
             'linestyle','-');
         % 
+        axes(ax2)
         box=patch(m_x,m_y,'red',...
             'userdata',0,...
             'marker','none',...
