@@ -17,7 +17,7 @@ function [p]=mck_demo()
     p.y0=10;
     p.ydot0=1;
     p.wn=sqrt(p.k/p.m);
-    p.fn=p.wn/(2*pi)
+    p.fn=p.wn/(2*pi);
     
     p.dr=p.c/(2*sqrt(p.m*p.k));
 
@@ -94,9 +94,6 @@ function [p]=mck_demo()
     
 
     function reset_cb(source,callbackdata)
-        
-        
-        
         
         stop(th)
         th=timer;
@@ -177,9 +174,7 @@ function [p]=mck_demo()
             'Position',[400 120 120 20],...
             'String',sprintf('K=:%5.2f',p.k));
         
-       
-        
-        
+
         %show_case()
         % Make figure visble after adding all components
 %         f.Visible = 'on';
