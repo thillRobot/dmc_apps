@@ -1,4 +1,4 @@
-function metronome_model(obj,event,p,lhan,mhan,rhan)
+function linear_metronome_model(obj,event,p,lhan,mhan,rhan)
 
         % treat the initial condtion the first time around
         if p.j==1
@@ -21,11 +21,15 @@ function metronome_model(obj,event,p,lhan,mhan,rhan)
         m_th=0:.01:2*pi;
         m_x=p.m_radius*cos(m_th)+xm;      
         m_y=p.m_radius*sin(m_th)+ym;
-    
-        set(rhan,'xdata',[0 xm]); % the rod
-        set(rhan,'ydata',[0 ym]);    
         
-        set(mhan,'xdata',m_x); % the mass
+        r_x=[0 xm-p.m_radius*cos(p.th0+pi/2)]; % a line for the 'rod'
+        r_y=[0 ym-p.m_radius*sin(p.th0+pi/2)]; % subtract the portion overlapping the mass
+    
+        
+        set(rhan,'xdata',r_x); % picture of the rod
+        set(rhan,'ydata',r_y);    
+        
+        set(mhan,'xdata',m_x); % picture of the mass
         set(mhan,'ydata',m_y);
         
         set(lhan,'xdata',[get(lhan,'xdata') t]); % the timeplot

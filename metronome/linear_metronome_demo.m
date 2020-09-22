@@ -17,33 +17,30 @@ function [p]=metronome_demo()
     p.l=0.5
     p.Io=p.m*p.l^2
     p.kt=50
-    
-    % intitial conditions 
-    
+
+    % derived parameters
+    p.wn=sqrt((p.kt-p.g*p.m*p.l)/p.Io); % natural frequency (rad/s)
+    p.fn=p.wn/(2*pi)                    % natural frequency (Hz)
+    p.dr=p.c/(2*sqrt(p.m*p.k));         % damping ratio
+    p.wd=p.wn*sqrt(1-p.dr^2);           % damped natural frequency (rad/s)
+          
+    % intitial conditions    
     p.th0=2*pi/180;
     p.y0=1;
     p.ydot0=1;
-    p.wn=sqrt((p.kt-p.g*p.m*p.l)/p.Io);
-    p.fn=p.wn/(2*pi)
     
-    
-    p.dr=p.c/(2*sqrt(p.m*p.k)); %damping ratio
-    p.wd=p.wn*sqrt(1-p.dr^2); % natural frequency
-   
-    %draw a round mass
+    % setup the graphics
     p.m_radius=.1;
     
-    xm=p.l*cos(p.th0+pi/2); 
+    xm=p.l*cos(p.th0+pi/2); % a point at a radius l
     ym=p.l*sin(p.th0+pi/2);
     
     m_th=0:.01:2*pi;    
-    m_x=p.m_radius*cos(m_th)+xm;
-    m_y=p.m_radius*sin(m_th)+ym;
+    m_x=p.m_radius*cos(m_th)+xm; % a circle of points at that point
+    m_y=p.m_radius*sin(m_th)+ym; % for the 'mass'
     
-    r_x=[0 xm]; 
-    r_y=[0 ym];
-    
-%     py=[0 0 p.bht p.bht]+p.y0;
+    r_x=[0 xm-p.m_radius*cos(p.th0+pi/2)]; % a line for the 'rod'
+    r_y=[0 ym-p.m_radius*sin(p.th0+pi/2)]; % subtract the portion overlapping the mass
 
    % Create a figure and axes
     f = figure('Visible','off');
@@ -54,12 +51,12 @@ function [p]=metronome_demo()
         'Callback', @reset_cb);  
     % Make figure visble after adding all components
     set(f,'Visible','on')
-%     f.Visible = 'on';
+
     
   
     %create the timer object 
     th=timer;
-    l=[]; %dummy multi scope vars
+    l=[]; %define multi scope vars here 
     box=[];
     rod=[];
     
@@ -145,7 +142,8 @@ function [p]=metronome_demo()
             'marker','.',...
             'color','black',...
             'markersize',2,...
-            'linestyle','-');
+            'linestyle','-',...
+            'LineWidth',3);
         shg; % show graph window 
         
         show_case()
@@ -219,7 +217,7 @@ function [p]=metronome_demo()
 
     function start_cb(source,callbackdata)
      
-        th.TimerFcn={@metronome_model,p,l,box,rod};
+        th.TimerFcn={@linear_metronome_model,p,l,box,rod};
         th.StopFcn={@model_stop};
         set(th,...
             'period',p.dt,...
