@@ -1,4 +1,4 @@
-function [P] = linear_metronome_parameters()
+function [P] = linear_metronome_parameters(M,L,KT)
 %LINEAR_METRONOME_PARAMETERS This function defines the params as a struct
 % 
 % The constant and derived parameters are defined in this function
@@ -13,12 +13,12 @@ function [P] = linear_metronome_parameters()
     
     % physical parameters
     P.g=9.8; %m/s^2
-    P.m=2; %mass 
+    P.m=M; %mass 
     P.k=50; %stiffness
     P.c=0; %damping
-    P.l=0.5;
+    P.l=L;
     P.Io=P.m*P.l^2;
-    P.kt=50;
+    P.kt=KT;
 
     % derived parameters
     P.wn=sqrt((P.kt-P.g*P.m*P.l)/P.Io); % natural frequency (rad/s)

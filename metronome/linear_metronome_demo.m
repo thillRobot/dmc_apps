@@ -1,8 +1,14 @@
 function [p]=linear_metronome_demo()
     
     clc;close all
-
-    p=linear_metronome_parameters(); % define constant and derived params
+    
+    % default system parameters, can be changed by UI
+    endmass=20;
+    rodlength=.4;
+    springrate=58;
+    
+    % call this function to define remaining constant and derived params
+    p=linear_metronome_parameters(endmass,rodlength,springrate); 
     
     xm=p.l*cos(p.th0+pi/2); % a point at a radius l
     ym=p.l*sin(p.th0+pi/2);
@@ -44,11 +50,8 @@ function [p]=linear_metronome_demo()
     function mass_cb(source,callbackdata)
         val = get(source,'Value');
         p.m=val;
-        %recalculate after params have been changed
-        p.wn=sqrt((p.kt-p.g*p.m*p.l)/p.Io);
-        p.dr=p.c/(2*sqrt(p.m*p.k));
-        p.wd=p.wn*sqrt(1-p.dr^2);
-        p.sc=p.kt-p.g*p.m*p.l; 
+        % recalculate derived params after UI change
+        p=linear_metronome_parameters(p.m,p.l,p.kt);  
         show_case()
         p
     end
@@ -56,10 +59,8 @@ function [p]=linear_metronome_demo()
     function length_cb(source,callbackdata)
         val = get(source,'Value');
         p.l=val;
-        %recalculate after params have been changed
-        p.wn=sqrt((p.kt-p.g*p.m*p.l)/p.Io);
-        p.dr=p.c/(2*sqrt(p.m*p.k));
-        p.wd=p.wn*sqrt(1-p.dr^2);
+        % recalculate derived params after UI change
+        p=linear_metronome_parameters(p.m,p.l,p.kt); 
         show_case()
         p
     end
@@ -67,10 +68,8 @@ function [p]=linear_metronome_demo()
     function spring_cb(source,callbackdata)
         val = get(source,'Value');
         p.kt=val;
-        %recalculate after params have been changed
-        p.wn=sqrt((p.kt-p.g*p.m*p.l)/p.Io);
-        p.dr=p.c/(2*sqrt(p.m*p.k));
-        p.wd=p.wn*sqrt(1-p.dr^2);
+       % recalculate derived params after UI change
+        p=linear_metronome_parameters(p.m,p.l,p.kt);
         
         show_case()
         p
@@ -222,32 +221,32 @@ function [p]=linear_metronome_demo()
          % Add a text uicontrol to label the slider.
          
         % Add a text uicontrol to label the slider. 
-        case_str=sprintf('Natural Frequency\n w_n(rad/s): %.2f, f(Hz): %.2f',p.wn,p.fn);
-        txt = uicontrol('Style','text',...
+        wn_str=sprintf('Natural Frequency\n w_n(rad/s): %.2f, f(Hz): %.2f',p.wn,p.fn);
+        txt = uicontrol('Style','text','HorizontalAlignment','left',...
             'Position',[150 300 200 50],...
-            'String',case_str); 
-        case_str=sprintf('Stability Criterion\n (), f(Hz): %.2f',p.wn,p.fn);
-        txt = uicontrol('Style','text',...
-            'Position',[150 300 200 50],...
-            'String',case_str); 
+            'String',wn_str); 
+        sc_str=sprintf('Stability Criterion\n (Kt-mgl): %.2f',p.sc);
+        txt = uicontrol('Style','text','HorizontalAlignment','left',...
+            'Position',[150 260 200 50],...
+            'String',sc_str); 
          
         txt_xpos=20;
         txt_width=100;
         txt_ypos=220;
         txt_height=20;
-        txt = uicontrol('Style','text',...
+        txt = uicontrol('Style','text','HorizontalAlignment','left',...
             'Position',[txt_xpos txt_ypos txt_width txt_height],...
-            'String',sprintf('Mass: %5.3f',p.m));
+            'String',sprintf('m: %5.3f',p.m));
         
         % Add a text uicontrol to label the slider.
-        txt = uicontrol('Style','text',...
+        txt = uicontrol('Style','text','HorizontalAlignment','left',...
             'Position',[txt_xpos txt_ypos+50 txt_width txt_height],...
             'String',sprintf('l: %5.3f',p.l));
         
         % Add a text uicontrol to label the slider.
-        txt = uicontrol('Style','text',...
+        txt = uicontrol('Style','text','HorizontalAlignment','left',...
             'Position',[txt_xpos txt_ypos+100 txt_width txt_height],...
-            'String',sprintf('Kt: %5.3f',p.kt));
+            'String',sprintf('kt: %5.3f',p.kt));
         
          
     end
