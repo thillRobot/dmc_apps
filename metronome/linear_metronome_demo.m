@@ -2,35 +2,7 @@ function [p]=linear_metronome_demo()
     
     clc;close all
 
-    %define timer function params
-    p.j=1; %timer index ?
-    p.t=0; %start time
-    p.stoptime=10;
-    p.dt=.05; %time increment
-    p.numtasks=round(p.stoptime/p.dt);
-    
-    % physical parameters
-    p.g=9.8; %m/s^2
-    p.m=2; %mass 
-    p.k=50; %stiffness
-    p.c=0; %damping
-    p.l=0.5;
-    p.Io=p.m*p.l^2;
-    p.kt=50;
-
-    % derived parameters
-    p.wn=sqrt((p.kt-p.g*p.m*p.l)/p.Io); % natural frequency (rad/s)
-    p.fn=p.wn/(2*pi);                   % natural frequency (Hz)
-    p.dr=p.c/(2*sqrt(p.m*p.k));         % damping ratio
-    p.wd=p.wn*sqrt(1-p.dr^2);           % damped natural frequency (rad/s)
-          
-    % intitial conditions    
-    p.th0=2*pi/180;
-    p.y0=1;
-    p.ydot0=1;
-    
-    % setup the graphics
-    p.m_radius=.1;
+    p=linear_metronome_parameters(); % define constant and derived params
     
     xm=p.l*cos(p.th0+pi/2); % a point at a radius l
     ym=p.l*sin(p.th0+pi/2);
@@ -46,8 +18,15 @@ function [p]=linear_metronome_demo()
     f = figure('Visible','off');
     %     ax = axes('Units','pixels');
     % Create push button - Start button
-    btn = uicontrol('Style', 'pushbutton', 'String', 'ME 3050 Dynamics Simulator',...
-        'Position', [10 380 200 30],...
+    
+    % setup the welcome button
+    wlcm_str=sprintf('Linear Metronome Demo - ME3050');
+    wlcm_txt = uicontrol('Style','text',...
+            'Position',[150 375 250 30],...
+            'String',wlcm_str);
+    btn_str=sprintf('Click Here to Begin');
+    btn = uicontrol('Style', 'pushbutton', 'String',btn_str,...
+        'Position', [10 380 150 30],...
         'Callback', @reset_cb);  
     % Make figure visble after adding all components
     set(f,'Visible','on')
@@ -69,6 +48,7 @@ function [p]=linear_metronome_demo()
         p.wn=sqrt((p.kt-p.g*p.m*p.l)/p.Io);
         p.dr=p.c/(2*sqrt(p.m*p.k));
         p.wd=p.wn*sqrt(1-p.dr^2);
+        p.sc=p.kt-p.g*p.m*p.l; 
         show_case()
         p
     end
@@ -91,6 +71,7 @@ function [p]=linear_metronome_demo()
         p.wn=sqrt((p.kt-p.g*p.m*p.l)/p.Io);
         p.dr=p.c/(2*sqrt(p.m*p.k));
         p.wd=p.wn*sqrt(1-p.dr^2);
+        
         show_case()
         p
     end
@@ -219,7 +200,7 @@ function [p]=linear_metronome_demo()
     end
 
     function show_case()
-         % Add a text uicontrol to label the slider.
+        
 
 %          if p.dr==1
 %              case_str=sprintf('Damping Ratio: %.2f\n Critically Damped',p.dr);
@@ -228,9 +209,6 @@ function [p]=linear_metronome_demo()
 %          else
 %              case_str=sprintf('Damping Ratio: %.2f\n Underamped',p.dr);
 %          end
-%          txt = uicontrol('Style','text',...
-%             'Position',[150 170 200 30],...
-%             'String',case_str);
         
 %         % Add a text uicontrol to label the slider.
 %         txt = uicontrol('Style','text',...
@@ -242,6 +220,16 @@ function [p]=linear_metronome_demo()
 %             'Position',[250 80 120 20],...
 %             'String',sprintf('Ydot0=:%5.2f',p.ydot0));
          % Add a text uicontrol to label the slider.
+         
+        % Add a text uicontrol to label the slider. 
+        case_str=sprintf('Natural Frequency\n w_n(rad/s): %.2f, f(Hz): %.2f',p.wn,p.fn);
+        txt = uicontrol('Style','text',...
+            'Position',[150 300 200 50],...
+            'String',case_str); 
+        case_str=sprintf('Stability Criterion\n (), f(Hz): %.2f',p.wn,p.fn);
+        txt = uicontrol('Style','text',...
+            'Position',[150 300 200 50],...
+            'String',case_str); 
          
         txt_xpos=20;
         txt_width=100;
