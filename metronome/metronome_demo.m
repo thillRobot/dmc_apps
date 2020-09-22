@@ -1,26 +1,24 @@
 function [p]=metronome_demo()
     
-    clc
-    close all
+    clc;close all
 
     %define timer function params
     p.j=1; %timer index ?
     p.t=0; %start time
-    p.stoptime=20;
-    p.dt=.005; %time increment
+    p.stoptime=10;
+    p.dt=.01; %time increment
     p.numtasks=round(p.stoptime/p.dt);
     
-    p.scale=1
-    p.scale2=1
+    % physical parameters
     p.g=9.8; %m/s^2
     p.m=2; %mass 
-    p.k=5; %stiffness
+    p.k=50; %stiffness
     p.c=0; %damping
-    % intitial conditions 
-    
-    p.l=.25
+    p.l=0.5
     p.Io=p.m*p.l^2
-    p.kt=5
+    p.kt=50
+    
+    % intitial conditions 
     
     p.th0=2*pi/180;
     p.y0=1;
@@ -29,20 +27,21 @@ function [p]=metronome_demo()
     p.fn=p.wn/(2*pi)
     
     
-    p.dr=p.c/(2*sqrt(p.m*p.k));
-
-    p.wd=p.wn*sqrt(1-p.dr^2);
+    p.dr=p.c/(2*sqrt(p.m*p.k)); %damping ratio
+    p.wd=p.wn*sqrt(1-p.dr^2); % natural frequency
    
     %draw a round mass
     p.m_radius=.1;
     
-    p.m_offx=-2.5;  
-    p.m_offy=p.l*sin(pi/180+p.th0);
+    xm=p.l*cos(p.th0+pi/2); 
+    ym=p.l*sin(p.th0+pi/2);
     
     m_th=0:.01:2*pi;    
-    m_x=p.m_radius*cos(m_th)+p.m_offx;
-    m_y=p.m_radius*sin(m_th)+p.m_offy;
+    m_x=p.m_radius*cos(m_th)+xm;
+    m_y=p.m_radius*sin(m_th)+ym;
     
+    r_x=[0 xm]; 
+    r_y=[0 ym];
     
 %     py=[0 0 p.bht p.bht]+p.y0;
 
@@ -62,72 +61,73 @@ function [p]=metronome_demo()
     th=timer;
     l=[]; %dummy multi scope vars
     box=[];
-    
+    rod=[];
     
     
     %define the GUI callbacks
     function mass_cb(source,callbackdata)
         val = get(source,'Value');
         p.m=val;
-          %recalculate after params have been changed
+        %recalculate after params have been changed
         p.wn=sqrt((p.kt-p.g*p.m*p.l)/p.Io);
         p.dr=p.c/(2*sqrt(p.m*p.k));
         p.wd=p.wn*sqrt(1-p.dr^2);
         show_case()
         p
     end
+    
     function length_cb(source,callbackdata)
         val = get(source,'Value');
         p.l=val;
-          %recalculate after params have been changed
+        %recalculate after params have been changed
         p.wn=sqrt((p.kt-p.g*p.m*p.l)/p.Io);
         p.dr=p.c/(2*sqrt(p.m*p.k));
         p.wd=p.wn*sqrt(1-p.dr^2);
         show_case()
         p
     end
+    
     function spring_cb(source,callbackdata)
         val = get(source,'Value');
         p.kt=val;
-          %recalculate after params have been changed
-         p.wn=sqrt((p.kt-p.g*p.m*p.l)/p.Io);
+        %recalculate after params have been changed
+        p.wn=sqrt((p.kt-p.g*p.m*p.l)/p.Io);
         p.dr=p.c/(2*sqrt(p.m*p.k));
         p.wd=p.wn*sqrt(1-p.dr^2);
         show_case()
         p
     end
+    
     function ydot0_cb(source,callbackdata)
         val = get(source,'Value');
         p.ydot0=val;
         show_case()
     end
+    
     function y0_cb(source,callbackdata)
         val = get(source,'Value');
         p.y0=val;
         show_case()
     end
 
-    
-
     function reset_cb(source,callbackdata)
         
         stop(th)
         th=timer;
-        % prepare the plot
-%         axis equal
+        % prepare the plot - setup two separate axis
+        % axis equal
+
+        % axis 1 is the time plot
         ax1 = axes('Parent',f,'Units','normalized','Position',[.2 .6 .6 .3]);
         grid(ax1,'on')
-        set(ax1,'XLim',[0,10],'YLim',[0,2])
-
+        set(ax1,'XLim',[0,10],'YLim',[-.2,.2])
+     
+        % axis 2 is the animation
         ax2 = axes('Parent',f,'Units','normalized','Position',[.1 .2 .6 .3]);
         set(ax2,'XLim',[-1,1],'YLim',[-1,1],'DataAspectRatio',[1 1 1])
         grid(ax2,'on')
 
-%         axes('xlim',[-5,5],'ylim',[-1,1]);
-%         set(gca,'DataAspectRatio',[1 1 1])
-        
-%         grid on
-        axes(ax1)
+        axes(ax1) % axis 1 is the time plot
         l=line(p.t,p.th0,...
             'userdata',0,...
             'marker','.',...
@@ -135,22 +135,21 @@ function [p]=metronome_demo()
             'markersize',2,...
             'linestyle','-');
         % 
-        axes(ax2)
+        axes(ax2) % axis 2 is the animation
         box=patch(m_x,m_y,'red',...
             'userdata',0,...
             'marker','none',...
             'linestyle','-');
+        rod=line(r_x,r_y,...
+            'userdata',0,...
+            'marker','.',...
+            'color','black',...
+            'markersize',2,...
+            'linestyle','-');
         shg; % show graph window 
         
-%         p.m=100; %mass 
-%         p.k=250; %stiffness
-%         p.c=100; %damping
-%         % intitial conditions 
-% 
-%         p.y0=10;
-%         p.ydot0=1;
-        
         show_case()
+        
         % Create push button - Start
         btn = uicontrol('Style', 'pushbutton', 'String', 'Reset',...
             'Position', [100 20 50 20],...
@@ -166,7 +165,7 @@ function [p]=metronome_demo()
 %             'Min',1,'Max',5000,'Value',p.y0,...
 %             'Position', [250 20 120 20],...
 %             'Callback', @y0_cb); 
-%         % Add a text uicontrol to label the slider.
+%         % Add a text uicontrol to label the slider
 %         txt = uicontrol('Style','text',...
 %             'Position',[250 40 120 20],...
 %             'String',sprintf('Y0=:%5.2f',p.y0)); 
@@ -176,7 +175,7 @@ function [p]=metronome_demo()
 %             'Min',0,'Max',10,'Value',p.ydot0,...
 %             'Position', [250 60 120 20],...
 %             'Callback', @ydot0_cb); 
-%         % Add a text uicontrol to label the slider.
+%         % Add a text uicontrol to label the slider
 %         txt = uicontrol('Style','text',...
 %             'Position',[250 80 120 20],...
 %             'String',sprintf('Ydot0=:%5.2f',p.ydot0));
@@ -186,7 +185,7 @@ function [p]=metronome_demo()
             'Min',1e-3,'Max',100,'Value',p.m,...
             'Position', [400 20 120 20],...
             'Callback', @mass_cb); 
-        % Add a text uicontrol to label the slider.
+        % Add a text uicontrol to label the slider
         txt = uicontrol('Style','text',...
             'Position',[400 40 120 20],...
             'String',sprintf('Mass=:%5.2f',p.m)); 
@@ -196,7 +195,7 @@ function [p]=metronome_demo()
             'Min',0,'Max',10,'Value',p.l,...
             'Position', [400 60 120 20],...
             'Callback', @length_cb); 
-         % Add a text uicontrol to label the slider.
+         % Add a text uicontrol to label the slider
         txt = uicontrol('Style','text',...
             'Position',[400 80 120 20],...
             'String',sprintf('L=:%5.2f',p.l));
@@ -206,13 +205,10 @@ function [p]=metronome_demo()
             'Min',0,'Max',100,'Value',p.kt,...
             'Position', [400 100 120 20],...
             'Callback', @spring_cb); 
-        % Add a text uicontrol to label the slider.
+        % Add a text uicontrol to label the slider
         txt = uicontrol('Style','text',...
             'Position',[400 120 120 20],...
-            'String',sprintf('Kt=:%5.2f',p.kt));
-        
-       
-        
+            'String',sprintf('Kt=:%5.2f',p.kt));      
         
         %show_case()
         % Make figure visble after adding all components
@@ -223,7 +219,7 @@ function [p]=metronome_demo()
 
     function start_cb(source,callbackdata)
      
-        th.TimerFcn={@metronome_model,p,l,box};
+        th.TimerFcn={@metronome_model,p,l,box,rod};
         th.StopFcn={@model_stop};
         set(th,...
             'period',p.dt,...
