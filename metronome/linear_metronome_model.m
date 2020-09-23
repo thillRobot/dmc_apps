@@ -22,8 +22,8 @@ function linear_metronome_model(obj,event,p,lhan,mhan,rhan)
         m_x=p.m_radius*cos(m_th)+xm;      
         m_y=p.m_radius*sin(m_th)+ym;
         
-        r_x=[0 xm-p.m_radius*cos(p.th0+pi/2)]; % a line for the 'rod'
-        r_y=[0 ym-p.m_radius*sin(p.th0+pi/2)]; % subtract the portion overlapping the mass
+        r_x=[0 xm-p.m_radius*cos(thm+pi/2)]; % a line for the 'rod'
+        r_y=[0 ym-p.m_radius*sin(thm+pi/2)]; % subtract the portion overlapping the mass
     
         
         set(rhan,'xdata',r_x); % picture of the rod

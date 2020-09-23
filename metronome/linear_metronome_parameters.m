@@ -8,7 +8,7 @@ function [P] = linear_metronome_parameters(M,L,KT)
     P.j=1; %timer index ?
     P.t=0; %start time
     P.stoptime=10;
-    P.dt=.05; %time increment
+    P.dt=.01; %time increment
     P.numtasks=round(P.stoptime/P.dt);
     
     % physical parameters

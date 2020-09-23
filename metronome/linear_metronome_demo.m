@@ -14,7 +14,7 @@ function [p]=linear_metronome_demo()
     ym=p.l*sin(p.th0+pi/2);
     
     m_th=0:.01:2*pi;    
-    m_x=p.m_radius*cos(m_th)+xm; % a circle of points at that point
+    m_x=p.m_radius*cos(m_th)+xm; % a circle of points around that point
     m_y=p.m_radius*sin(m_th)+ym; % for the 'mass'
     
     r_x=[0 xm-p.m_radius*cos(p.th0+pi/2)]; % a line for the 'rod'
@@ -22,29 +22,151 @@ function [p]=linear_metronome_demo()
 
     % Create a figure and axes
     f = figure('Visible','off');
-    %     ax = axes('Units','pixels');
-    % Create push button - Start button
-    
-    % setup the welcome button
-    wlcm_str=sprintf('Linear Metronome Demo - ME3050');
-    wlcm_txt = uicontrol('Style','text',...
-            'Position',[150 375 250 30],...
-            'String',wlcm_str);
+    % ax = axes('Units','pixels');
+   
+    % create a uipanel to contain the different components of th app   
+    main_panel = uipanel('Title','Linear Metronome Demo - ME3050','FontSize',12,...
+             'BackgroundColor','white',...
+             'Position',[.01 .01 .98 .98],...
+             'Visible','on');
+    ctrl_panel = uipanel('Parent',main_panel,'Title','User Controls','FontSize',12,...
+             'Position',[.03 .05 .27 .95],...
+             'Visible','off');
+    data_panel = uipanel('Parent',main_panel,'Title','Model Data','FontSize',12,...
+             'Position',[.32 .6 .37 .4],...
+             'Visible','off');
+
     btn_str=sprintf('Click Here to Begin');
-    btn = uicontrol('Style', 'pushbutton', 'String',btn_str,...
-        'Position', [10 380 150 30],...
-        'Callback', @reset_cb);  
+    wlcm_btn = uicontrol('Parent',main_panel,'Style', 'pushbutton', 'String',btn_str,...
+        'Position', [20 320 150 36],...
+        'Callback', @reset_cb,...
+        'Visible','on');
+     
+   % Create push button - Start
+    reset_btn = uicontrol('Parent',ctrl_panel,'Style', 'pushbutton', 'String', 'Reset',...
+        'Position', [10 260 60 30],...
+        'Callback', @reset_cb,...
+        'Visible','off');
+
+    % Create push button - Reset
+    start_btn = uicontrol('Parent',ctrl_panel,'Style', 'pushbutton', 'String', 'Start',...
+        'Position', [80 260 60 30],...
+        'Callback', @start_cb,...
+        'Visible','off');
+     
+    sldr_xpos=10;
+    sldr_width=100;
+    sldr_ypos=20;
+    sldr_height=20;
+     %Create slider - mass
+    mass_sldr = uicontrol('Parent',ctrl_panel,'Style', 'slider',...
+        'Min',1e-3,'Max',100,'Value',p.m,...
+        'Position', [sldr_xpos sldr_ypos+150 sldr_width sldr_height],...
+        'Callback', @mass_cb,...
+        'Visible','off'); 
+    % Create slider - length
+    length_sldr = uicontrol('Parent',ctrl_panel,'Style', 'slider',...
+        'Min',0,'Max',2,'Value',p.l,...
+        'Position', [sldr_xpos sldr_ypos+100 sldr_width sldr_height],...
+        'Callback', @length_cb,...
+        'Visible','off'); 
+    % Create slider - spring constant
+    spring_sldr = uicontrol('Parent',ctrl_panel,'Style', 'slider',...
+        'Min',0,'Max',500,'Value',p.kt,...
+        'Position', [sldr_xpos sldr_ypos+50 sldr_width sldr_height],...
+        'Callback', @spring_cb,...
+        'Visible','off'); 
+    %Create slider - initial theta
+    theta0_sldr = uicontrol('Parent',ctrl_panel,'Style', 'slider',...
+        'Min',0,'Max',20,'Value',p.th0,...
+        'Position', [sldr_xpos sldr_ypos sldr_width sldr_height],...
+        'Callback', @theta0_cb,...
+        'Visible','off'); 
+           % Add text uicontrol to label the sliders
+    txt_xpos=10;
+    txt_width=100;
+    txt_ypos=40;
+    txt_height=20;
+    mass_txt = uicontrol('Parent',ctrl_panel,'Style','text','HorizontalAlignment','left',...
+        'Position',[txt_xpos txt_ypos+150 txt_width txt_height],...
+        'String',sprintf('m: %5.3f',p.m),...
+        'Visible','off'); 
+
+    length_txt = uicontrol('Parent',ctrl_panel,'Style','text','HorizontalAlignment','left',...
+        'Position',[txt_xpos txt_ypos+100 txt_width txt_height],...
+        'String',sprintf('l: %5.3f',p.l),...
+        'Visible','off'); 
+
+    spring_txt = uicontrol('Parent',ctrl_panel,'Style','text','HorizontalAlignment','left',...
+        'Position',[txt_xpos txt_ypos+50 txt_width txt_height],...
+        'String',sprintf('kt: %5.3f',p.kt),...
+        'Visible','off'); 
+
+    theta0_txt = uicontrol('Parent',ctrl_panel,'Style','text','HorizontalAlignment','left',...
+        'Position',[txt_xpos txt_ypos txt_width txt_height],...
+        'String',sprintf('th0: %5.3f',p.th0),...
+        'Visible','off'); 
+    
+    wn_str=sprintf('Natural Frequency\n w_n(rad/s): %.2f, f(Hz): %.2f',p.wn,p.fn);
+    if p.sc>0
+        sc_str=sprintf('Stability Criterion: Stable\n (kt-mgl): %.2f',p.sc);
+    else
+        sc_str=sprintf('Stability Criterion: Unstable!\n (kt-mgl): %.2f',p.sc);
+    end
+    wn_txt = uicontrol('Parent',data_panel,'Style','text','HorizontalAlignment','left',...
+        'Position',[10 80 200 50],...
+        'String',wn_str,...
+        'Visible','off'); 
+    sc_txt = uicontrol('Parent',data_panel,'Style','text','HorizontalAlignment','left',...
+        'Position',[10 30 200 50],...
+        'String',sc_str,...
+        'Visible','off');         
+    
+    % prepare the plot - setup two separate axes 
+    % axis 1 is the time plot
+    ax1 = axes('Parent',main_panel,'Units','normalized',...
+                'Position',[.4 .1 .5 .3],...
+                'Visible','off');  
+    set(ax1,'XLim',[0,10],'YLim',[-.2,.2])
+    grid(ax1,'on')
+    % axis 2 is the animation
+    ax2 = axes('Parent',main_panel,'Units','normalized',...
+                'Position',[.6 .5 .5 .3],...
+                'Visible','off');
+    set(ax2,'XLim',[-1,1],'YLim',[-1,1],'DataAspectRatio',[1 1 1])
+    grid(ax2,'on')
+
+    axes(ax1) % axis 1 is the time plot
+    l=line(p.t,p.th0,...
+        'userdata',0,...
+        'marker','.',...
+        'color','black',...
+        'markersize',2,...
+        'linestyle','-',...
+        'Visible','off');
+
+    axes(ax2) % axis 2 is the animation
+    box=patch(m_x,m_y,'red',...
+        'userdata',0,...
+        'marker','none',...
+        'linestyle','-',...
+        'Visible','off');
+    rod=line(r_x,r_y,...
+        'userdata',0,...
+        'marker','.',...
+        'color','black',...
+        'markersize',2,...
+        'linestyle','-',...
+        'LineWidth',3,...
+        'Visible','off');
+    
     % Make figure visble after adding all components
     set(f,'Visible','on')
 
-    
-  
-    %create the timer object 
+    %create the timer object and others
     th=timer;
-    l=[]; %define multi scope vars here 
-    box=[];
-    rod=[];
-    
+
+    startup=1; % flag for startup in 'reset_cb'
     
     %define the GUI callbacks
     function mass_cb(source,callbackdata)
@@ -68,122 +190,59 @@ function [p]=linear_metronome_demo()
     function spring_cb(source,callbackdata)
         val = get(source,'Value');
         p.kt=val;
-       % recalculate derived params after UI change
+        % recalculate derived params after UI change
         p=linear_metronome_parameters(p.m,p.l,p.kt);
-        
         show_case()
         p
     end
     
-    function ydot0_cb(source,callbackdata)
+    function theta0_cb(source,callbackdata)
         val = get(source,'Value');
-        p.ydot0=val;
+        p.th0=val;
         show_case()
     end
+
     
-    function y0_cb(source,callbackdata)
-        val = get(source,'Value');
-        p.y0=val;
-        show_case()
-    end
 
     function reset_cb(source,callbackdata)
         
+        % delete the startup/welcome button, only the first time
+        if startup
+            
+            set(ax1,'Visible','on')
+            set(ax2,'Visible','on')
+            
+            set(box,'Visible','on')
+            set(rod,'Visible','on')
+            set(l,'Visible','on')
+            set(ctrl_panel,'Visible','on')
+            set(data_panel,'Visible','on')
+                      
+            set(wlcm_btn,'Visible','off') % off
+            set(reset_btn,'Visible','on')
+            set(start_btn,'Visible','on')
+            
+            set(mass_sldr,'Visible','on')
+            set(length_sldr,'Visible','on')
+            set(spring_sldr,'Visible','on')
+            set(theta0_sldr,'Visible','on')
+            
+            set(mass_txt,'Visible','on')
+            set(length_txt,'Visible','on')
+            set(spring_txt,'Visible','on')
+            set(theta0_txt,'Visible','on')
+            set(wn_txt,'Visible','on')
+            set(sc_txt,'Visible','on')
+                     
+            startup=0;
+        end
         stop(th)
         th=timer;
-        % prepare the plot - setup two separate axis
-        % axis equal
-
-        % axis 1 is the time plot
-        ax1 = axes('Parent',f,'Units','normalized','Position',[.3 .1 .6 .3]);
-        grid(ax1,'on')
-        set(ax1,'XLim',[0,10],'YLim',[-.2,.2])
-     
-        % axis 2 is the animation
-        ax2 = axes('Parent',f,'Units','normalized','Position',[.5 .5 .6 .3]);
-        set(ax2,'XLim',[-1,1],'YLim',[-1,1],'DataAspectRatio',[1 1 1])
-        grid(ax2,'on')
-
-        axes(ax1) % axis 1 is the time plot
-        l=line(p.t,p.th0,...
-            'userdata',0,...
-            'marker','.',...
-            'color','black',...
-            'markersize',2,...
-            'linestyle','-');
-        % 
-        axes(ax2) % axis 2 is the animation
-        box=patch(m_x,m_y,'red',...
-            'userdata',0,...
-            'marker','none',...
-            'linestyle','-');
-        rod=line(r_x,r_y,...
-            'userdata',0,...
-            'marker','.',...
-            'color','black',...
-            'markersize',2,...
-            'linestyle','-',...
-            'LineWidth',3);
-        shg; % show graph window 
-        
-        show_case()
-        
-        % Create push button - Start
-        btn = uicontrol('Style', 'pushbutton', 'String', 'Reset',...
-            'Position', [10 350 50 20],...
-            'Callback', @reset_cb);
-
-        % Create push button - Reset
-        btn = uicontrol('Style', 'pushbutton', 'String', 'Start',...
-            'Position', [60 350 50 20],...
-            'Callback', @start_cb);
-       
-%         %Create slider - initial position
-%         sld = uicontrol('Style', 'slider',...
-%             'Min',1,'Max',5000,'Value',p.y0,...
-%             'Position', [250 20 120 20],...
-%             'Callback', @y0_cb); 
-%         % Add a text uicontrol to label the slider
-%         txt = uicontrol('Style','text',...
-%             'Position',[250 40 120 20],...
-%             'String',sprintf('Y0=:%5.2f',p.y0)); 
-        
-%         % Create slider - initial velocity
-%         sld = uicontrol('Style', 'slider',...
-%             'Min',0,'Max',10,'Value',p.ydot0,...
-%             'Position', [250 60 120 20],...
-%             'Callback', @ydot0_cb); 
-%         % Add a text uicontrol to label the slider
-%         txt = uicontrol('Style','text',...
-%             'Position',[250 80 120 20],...
-%             'String',sprintf('Ydot0=:%5.2f',p.ydot0));
-        sldr_xpos=20;
-        sldr_width=100;
-        sldr_ypos=200;
-        sldr_height=20;
-        %Create slider - mass
-        sld = uicontrol('Style', 'slider',...
-            'Min',1e-3,'Max',100,'Value',p.m,...
-            'Position', [sldr_xpos sldr_ypos sldr_width sldr_height],...
-            'Callback', @mass_cb); 
-        
-        % Create slider - length
-        sld = uicontrol('Style', 'slider',...
-            'Min',0,'Max',10,'Value',p.l,...
-            'Position', [sldr_xpos sldr_ypos+50 sldr_width sldr_height],...
-            'Callback', @length_cb); 
-    
-        % Create slider - spring constant
-        sld = uicontrol('Style', 'slider',...
-            'Min',0,'Max',100,'Value',p.kt,...
-            'Position', [sldr_xpos sldr_ypos+100 sldr_width sldr_height],...
-            'Callback', @spring_cb); 
-       
-        %show_case()
-        % Make figure visble after adding all components
-%         f.Visible = 'on';
+         
         set(f,'Visible','on')
-        show_case()
+        
+        show_case()  
+        
     end
 
     function start_cb(source,callbackdata)
@@ -200,55 +259,46 @@ function [p]=linear_metronome_demo()
 
     function show_case()
         
+        thm=p.th0;%*cos(p.wn*t);
+        
+        % draw a point at the end of the pendulum
+        xm=p.l*cos(thm+pi/2);%+p.m_offx;
+        ym=p.l*sin(thm+pi/2);%+p.m_offy;
+        
+        % draw a round mass
+        m_th=0:.01:2*pi;
+        m_x=p.m_radius*cos(m_th)+xm;      
+        m_y=p.m_radius*sin(m_th)+ym;
+        
+        r_x=[0 xm-p.m_radius*cos(thm+pi/2)]; % a line for the 'rod'
+        r_y=[0 ym-p.m_radius*sin(thm+pi/2)]; % subtract the portion overlapping the mass
+    
+        
+        set(rod,'xdata',r_x); % picture of the rod
+        set(rod,'ydata',r_y);    
+        
+        set(box,'xdata',m_x); % picture of the mass
+        set(box,'ydata',m_y);
+        
+        set(l,'xdata',0); % the timeplot
+        set(l,'ydata',thm);
 
-%          if p.dr==1
-%              case_str=sprintf('Damping Ratio: %.2f\n Critically Damped',p.dr);
-%          elseif p.dr>1
-%              case_str=sprintf('Damping Ratio: %.2f\n Overdamped',p.dr);
-%          else
-%              case_str=sprintf('Damping Ratio: %.2f\n Underamped',p.dr);
-%          end
-        
-%         % Add a text uicontrol to label the slider.
-%         txt = uicontrol('Style','text',...
-%             'Position',[250 40 120 20],...
-%             'String',sprintf('Y0=:%5.2f',p.y0)); 
-%         
-%         % Add a text uicontrol to label the slider.
-%         txt = uicontrol('Style','text',...
-%             'Position',[250 80 120 20],...
-%             'String',sprintf('Ydot0=:%5.2f',p.ydot0));
-         % Add a text uicontrol to label the slider.
-         
-        % Add a text uicontrol to label the slider. 
+        % Add a text uicontrol to show the derived parameters 
         wn_str=sprintf('Natural Frequency\n w_n(rad/s): %.2f, f(Hz): %.2f',p.wn,p.fn);
-        txt = uicontrol('Style','text','HorizontalAlignment','left',...
-            'Position',[150 300 200 50],...
-            'String',wn_str); 
-        sc_str=sprintf('Stability Criterion\n (Kt-mgl): %.2f',p.sc);
-        txt = uicontrol('Style','text','HorizontalAlignment','left',...
-            'Position',[150 260 200 50],...
-            'String',sc_str); 
-         
-        txt_xpos=20;
-        txt_width=100;
-        txt_ypos=220;
-        txt_height=20;
-        txt = uicontrol('Style','text','HorizontalAlignment','left',...
-            'Position',[txt_xpos txt_ypos txt_width txt_height],...
-            'String',sprintf('m: %5.3f',p.m));
-        
-        % Add a text uicontrol to label the slider.
-        txt = uicontrol('Style','text','HorizontalAlignment','left',...
-            'Position',[txt_xpos txt_ypos+50 txt_width txt_height],...
-            'String',sprintf('l: %5.3f',p.l));
-        
-        % Add a text uicontrol to label the slider.
-        txt = uicontrol('Style','text','HorizontalAlignment','left',...
-            'Position',[txt_xpos txt_ypos+100 txt_width txt_height],...
-            'String',sprintf('kt: %5.3f',p.kt));
-        
-         
+       
+        if p.sc>0
+            sc_str=sprintf('Stability Criterion: Stable\n (kt-mgl): %.2f',p.sc);
+        else
+            sc_str=sprintf('Stability Criterion: Unstable!\n (kt-mgl): %.2f',p.sc);
+        end
+        set(wn_txt,'String',wn_str);
+        set(sc_txt,'String',sc_str);
+
+        set(mass_txt,'String',sprintf('m: %5.3f',p.m));
+        set(length_txt,'String',sprintf('l: %5.3f',p.l));
+        set(spring_txt,'String',sprintf('kt: %5.3f',p.kt));
+        set(theta0_txt,'String',sprintf('th0: %5.3f',p.th0));
+    
     end
     
 
