@@ -11,7 +11,7 @@ function [p]=mck_demo()
     p.g=9.8; %m/s^2
     p.m=1; %mass 
     p.k=50; %*pi^2 %stiffness
-    p.c=0; %damping
+    p.c=10; %damping
     % intitial conditions 
 
     p.y0=5;
